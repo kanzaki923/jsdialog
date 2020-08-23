@@ -2,6 +2,7 @@ import Point from "./point.js";
 import Size from "./size.js";
 import {ButtonTypes as Types, getBtnDataFromButtonTypes, ButtonTypes} from "./buttons.js";
 import DialogResult from "./dialogResult.js";
+import { DialogStartPosition } from "./dialogStartPosition.js";
 
 export default abstract class WindowBase<T>{
     ///////// static
@@ -74,7 +75,6 @@ export default abstract class WindowBase<T>{
         if (this._element){
             if (this._topMost){
                 this._element.style.zIndex = "1000";
-                console.log("top");
             }else{
                 this._element.style.zIndex = "999";
             }
@@ -84,12 +84,14 @@ export default abstract class WindowBase<T>{
 
     public result:DialogResult;
     public closing:() => void;
+    public startPosition: DialogStartPosition;
 
     constructor();
     constructor(title:string, content:T);
+    constructor(title:string, content:T, startPos:DialogStartPosition);
     constructor(title:string, contnet:T, pos:Point, size:Size);
     constructor(pos:Point, size:Size);
-    constructor(val1?:string | Point, val2?:T | Size, val3?:Point, val4?:Size){
+    constructor(val1?:string | Point,    val2?:T | Size,    val3?:Point | DialogStartPosition,    val4?:Size){
         this._position = new Point(20 * WindowBase.WindowCount % 300, 20 * WindowBase.WindowCount % 300);
         this.size = new Size(300, 200);
         this._title = "ダイアログ";
@@ -99,6 +101,7 @@ export default abstract class WindowBase<T>{
         this._isMovable = true;
         this._clickPoint = new Point();
         this._topMost = false;
+        this.startPosition = new DialogStartPosition("Default");
         
         if (typeof val1 === "string"){
             this._title = val1;
@@ -117,6 +120,18 @@ export default abstract class WindowBase<T>{
         if (val3 instanceof Point){
             this._position = val3;
         }
+        if (val3 instanceof DialogStartPosition){
+            this.startPosition = val3;
+            if (val3.value == "Default"){
+                //
+            }else if(val3.value == "Manual"){
+                this._position = new Point(0,0);
+            }else if(val3.value == "CenterMouse"){
+                this._position = new Point(window.innerWidth / 2 - this._size.width / 2, window.innerHeight / 2 - this._size.height / 2);
+            }else if(val3.value == "CenterWindow"){
+                this._position = new Point(window.innerWidth / 2 - this._size.width / 2, window.innerHeight / 2 - this._size.height / 2);
+            }
+        }
         if (val4 instanceof Size){
             this.size = val4;
         }
@@ -125,8 +140,11 @@ export default abstract class WindowBase<T>{
     }
 
     public show():void{
+        if (this.startPosition?.value == "CenterMouse"){
+            const ev = <MouseEvent>window.event;
+            this.position = new Point(ev.x - this._size.width / 2, ev.y - this._size.height / 2 );
+        }
         const elem = this.makeElement();
-        
         const dest = document.querySelector("body");
         if (dest){
             dest.append(elem);

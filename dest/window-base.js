@@ -11,6 +11,7 @@ import Point from "./point.js";
 import Size from "./size.js";
 import { ButtonTypes as Types, getBtnDataFromButtonTypes } from "./buttons.js";
 import DialogResult from "./dialogResult.js";
+import { DialogStartPosition } from "./dialogStartPosition.js";
 export default class WindowBase {
     constructor(val1, val2, val3, val4) {
         this._position = new Point(20 * WindowBase.WindowCount % 300, 20 * WindowBase.WindowCount % 300);
@@ -22,6 +23,7 @@ export default class WindowBase {
         this._isMovable = true;
         this._clickPoint = new Point();
         this._topMost = false;
+        this.startPosition = new DialogStartPosition("Default");
         if (typeof val1 === "string") {
             this._title = val1;
         }
@@ -36,6 +38,21 @@ export default class WindowBase {
         }
         if (val3 instanceof Point) {
             this._position = val3;
+        }
+        if (val3 instanceof DialogStartPosition) {
+            this.startPosition = val3;
+            if (val3.value == "Default") {
+                //
+            }
+            else if (val3.value == "Manual") {
+                this._position = new Point(0, 0);
+            }
+            else if (val3.value == "CenterMouse") {
+                this._position = new Point(window.innerWidth / 2 - this._size.width / 2, window.innerHeight / 2 - this._size.height / 2);
+            }
+            else if (val3.value == "CenterWindow") {
+                this._position = new Point(window.innerWidth / 2 - this._size.width / 2, window.innerHeight / 2 - this._size.height / 2);
+            }
         }
         if (val4 instanceof Size) {
             this.size = val4;
@@ -99,7 +116,6 @@ export default class WindowBase {
         if (this._element) {
             if (this._topMost) {
                 this._element.style.zIndex = "1000";
-                console.log("top");
             }
             else {
                 this._element.style.zIndex = "999";
@@ -107,6 +123,11 @@ export default class WindowBase {
         }
     }
     show() {
+        var _a;
+        if (((_a = this.startPosition) === null || _a === void 0 ? void 0 : _a.value) == "CenterMouse") {
+            const ev = window.event;
+            this.position = new Point(ev.x - this._size.width / 2, ev.y - this._size.height / 2);
+        }
         const elem = this.makeElement();
         const dest = document.querySelector("body");
         if (dest) {

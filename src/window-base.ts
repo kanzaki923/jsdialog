@@ -5,8 +5,8 @@ import {ButtonTypes as Types, getLabelFromButtonTypes} from "./buttons.js";
 export default abstract class WindowBase<T>{
     ///////// static
     private static WindowCount = 0;
-    private static ActiveInstance:WindowBase<any>;
-    private static SetActive(dialog:WindowBase<any>){
+    private static ActiveInstance:WindowBase<unknown>;
+    private static SetActive(dialog:WindowBase<unknown>){
         if (!WindowBase.ActiveInstance){
             WindowBase.ActiveInstance = dialog;
             dialog.topMost = true;
@@ -81,7 +81,7 @@ export default abstract class WindowBase<T>{
     }
 
 
-    public result:any;
+    public result:unknown;
 
     constructor();
     constructor(title:string, content:T);

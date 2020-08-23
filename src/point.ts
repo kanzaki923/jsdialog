@@ -6,7 +6,7 @@ export default class Point{
 
     constructor();
     constructor(x:number, y:number);
-    constructor(val1?:any, val2?:any){
+    constructor(val1?:unknown, val2?:unknown){
         this.X = 0;
         this.Y = 0;
 

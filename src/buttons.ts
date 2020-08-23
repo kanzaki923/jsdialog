@@ -10,14 +10,16 @@ export enum ButtonTypes{
     Retry   = 1 << 4,
     No      = 1 << 5,
     Ignore  = 1 << 6,
-    Cancel  = 1 << 7,
-    Close   = 1 << 8,
+    Delete  = 1 << 7,
+    Cancel  = 1 << 8,
+    Close   = 1 << 9,
 
     //ex
     OkNo    = Ok | No,
     YesNo   = Yes | No,
     OkCancel = Ok | Cancel,
     SaveCancel = Save | Cancel,
+    DeleteCancel = Delete | Cancel,
 }
 
 export function getLabelFromButtonTypes(type:ButtonTypes):string[]{
@@ -31,8 +33,9 @@ export function getLabelFromButtonTypes(type:ButtonTypes):string[]{
         [1 << 4 , "再試行"],
         [1 << 5 , "いいえ"],
         [1 << 6 , "無視"],
-        [1 << 7 , "キャンセル"],
-        [1 << 8 , "閉じる"],
+        [1 << 7 , "削除"],
+        [1 << 8 , "キャンセル"],
+        [1 << 9 , "閉じる"],
     ];
 
     const res:string[] = [];

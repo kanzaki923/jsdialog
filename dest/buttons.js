@@ -10,13 +10,15 @@ export var ButtonTypes;
     ButtonTypes[ButtonTypes["Retry"] = 16] = "Retry";
     ButtonTypes[ButtonTypes["No"] = 32] = "No";
     ButtonTypes[ButtonTypes["Ignore"] = 64] = "Ignore";
-    ButtonTypes[ButtonTypes["Cancel"] = 128] = "Cancel";
-    ButtonTypes[ButtonTypes["Close"] = 256] = "Close";
+    ButtonTypes[ButtonTypes["Delete"] = 128] = "Delete";
+    ButtonTypes[ButtonTypes["Cancel"] = 256] = "Cancel";
+    ButtonTypes[ButtonTypes["Close"] = 512] = "Close";
     //ex
     ButtonTypes[ButtonTypes["OkNo"] = 33] = "OkNo";
     ButtonTypes[ButtonTypes["YesNo"] = 34] = "YesNo";
-    ButtonTypes[ButtonTypes["OkCancel"] = 129] = "OkCancel";
-    ButtonTypes[ButtonTypes["SaveCancel"] = 132] = "SaveCancel";
+    ButtonTypes[ButtonTypes["OkCancel"] = 257] = "OkCancel";
+    ButtonTypes[ButtonTypes["SaveCancel"] = 260] = "SaveCancel";
+    ButtonTypes[ButtonTypes["DeleteCancel"] = 384] = "DeleteCancel";
 })(ButtonTypes || (ButtonTypes = {}));
 export function getLabelFromButtonTypes(type) {
     const lang = 1;
@@ -29,8 +31,9 @@ export function getLabelFromButtonTypes(type) {
         [1 << 4, "再試行"],
         [1 << 5, "いいえ"],
         [1 << 6, "無視"],
-        [1 << 7, "キャンセル"],
-        [1 << 8, "閉じる"],
+        [1 << 7, "削除"],
+        [1 << 8, "キャンセル"],
+        [1 << 9, "閉じる"],
     ];
     const res = [];
     for (const val of table) {

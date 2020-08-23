@@ -20,7 +20,7 @@ export var ButtonTypes;
     ButtonTypes[ButtonTypes["SaveCancel"] = 260] = "SaveCancel";
     ButtonTypes[ButtonTypes["DeleteCancel"] = 384] = "DeleteCancel";
 })(ButtonTypes || (ButtonTypes = {}));
-export function getLabelFromButtonTypes(type) {
+export function getBtnDataFromButtonTypes(type) {
     const lang = 1;
     const table = [
         [0, ""],
@@ -37,9 +37,19 @@ export function getLabelFromButtonTypes(type) {
     ];
     const res = [];
     for (const val of table) {
-        if ((type & Number(val[0])) == Number(val[0])) {
-            res.push(val[lang].toString());
+        const n = Number(val[0]);
+        const label = val[lang].toString();
+        if ((type & n) == n) {
+            res.push({ key: n, text: label });
         }
+    }
+    return res;
+}
+export function getLabelFromButtonTypes(type) {
+    const datas = getBtnDataFromButtonTypes(type);
+    const res = [];
+    for (const val of datas) {
+        res.push(val.text);
     }
     return res;
 }

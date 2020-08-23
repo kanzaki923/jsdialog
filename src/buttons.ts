@@ -22,7 +22,7 @@ export enum ButtonTypes{
     DeleteCancel = Delete | Cancel,
 }
 
-export function getLabelFromButtonTypes(type:ButtonTypes):string[]{
+export function getBtnDataFromButtonTypes(type:ButtonTypes):{key:number, text:string}[]{
     const lang = 1;
     const table = [
         [0 , ""],
@@ -38,11 +38,25 @@ export function getLabelFromButtonTypes(type:ButtonTypes):string[]{
         [1 << 9 , "閉じる"],
     ];
 
-    const res:string[] = [];
+    const res:{key:number, text:string}[] = [];
+    
     for (const val of table) {
-        if ((type & Number(val[0])) == Number(val[0])){
-            res.push(val[lang].toString());
+        const n = Number(val[0]);
+        const label = val[lang].toString();
+        if ((type & n) == n){
+            res.push({key: n, text: label});
         }
+    }
+
+    return res;
+}
+
+export function getLabelFromButtonTypes(type:ButtonTypes):string[]{
+
+    const datas = getBtnDataFromButtonTypes(type);
+    const res:string[] = [];
+    for (const val of datas) {
+        res.push(val.text);
     }
 
     return res;

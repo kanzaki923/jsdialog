@@ -1,6 +1,7 @@
 import Point from "./point.js";
 import Size from "./size.js";
-import {ButtonTypes as Types, getLabelFromButtonTypes} from "./buttons.js";
+import {ButtonTypes as Types, getBtnDataFromButtonTypes, ButtonTypes} from "./buttons.js";
+import DialogResult from "./dialogResult.js";
 
 export default abstract class WindowBase<T>{
     ///////// static
@@ -36,7 +37,7 @@ export default abstract class WindowBase<T>{
     public get content():T | undefined { return this._content; }
     
     public get buttons():Types { return this.buttons; }
-    public set buttons(types:Types){ this._buttons = types; }
+    public set buttons(types:Types ){ this._buttons = types; }
     
     public set size(size:Size){
         let width = size.width;
@@ -81,7 +82,8 @@ export default abstract class WindowBase<T>{
     }
 
 
-    public result:unknown;
+    public result:DialogResult;
+    public closing:() => void;
 
     constructor();
     constructor(title:string, content:T);
@@ -130,6 +132,18 @@ export default abstract class WindowBase<T>{
             dest.append(elem);
             WindowBase.SetActive(this);    
         }
+    }
+
+    public async asyncShow():Promise<DialogResult>{
+
+        this.show();
+
+        const promise = new Promise<DialogResult>((resolve, reject) => {
+            this.closing = () => {
+                resolve(this.result);
+            }
+        });
+        return promise;
     }
 
     private elemMove(e:MouseEvent){
@@ -231,7 +245,7 @@ export default abstract class WindowBase<T>{
             padding: 1rem 2rem;
         `;
 
-        // button
+        // button area
         const b = document.createElement("div");
         b.classList.add("dialog-button");
         b.style.cssText = `
@@ -244,7 +258,7 @@ export default abstract class WindowBase<T>{
 
         t_str.textContent = this.getTitle();
         c_area.appendChild(this.makeContentElem());
-        b.appendChild(this.makeButtonElem());
+        b.appendChild(this.makeButtonsElem());
 
         t.appendChild(t_str);
         c.appendChild(c_area);
@@ -266,21 +280,22 @@ export default abstract class WindowBase<T>{
         return this._title;
     }
 
-    protected makeButtonElem():DocumentFragment{
-        const btns = document.createDocumentFragment();
-        const labels = getLabelFromButtonTypes(this._buttons);
+    protected abstract getResult():unknown;
 
-        for (const label of labels) {
-            if (label.trim().length == 0){
+    protected makeButtonsElem():DocumentFragment{
+        const btns = document.createDocumentFragment();
+        const btnDatas = getBtnDataFromButtonTypes(this._buttons);
+        for (const btn of btnDatas) {
+            if (btn.text.trim().length === 0) { 
                 continue;
             }
-            btns.appendChild(this.makeButton(label.trim()));
+            btns.appendChild(this.makeButton(btn.text, btn.key));
         }
         
         return btns;
     }
 
-    protected makeButton(text:string):HTMLElement{
+    protected makeButton(text:string, type:ButtonTypes):HTMLElement{
         const btn = document.createElement("button");
         btn.style.cssText = `
             display: inline-block;
@@ -299,8 +314,17 @@ export default abstract class WindowBase<T>{
         
         btn.innerHTML = text || " - ";
         btn.addEventListener("click", e => {
+            if (!this.result){
+                this.result = new DialogResult();
+            }
+            this.result.button = type;
+            this.result.data = this.getResult();
+
             this._element.parentElement?.removeChild(this._element);
             this._element = undefined;
+            if (this.closing){
+                this.closing();
+            }
         });
         return btn;
     }

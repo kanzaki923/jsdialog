@@ -1,6 +1,16 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 import Point from "./point.js";
 import Size from "./size.js";
-import { ButtonTypes as Types, getLabelFromButtonTypes } from "./buttons.js";
+import { ButtonTypes as Types, getBtnDataFromButtonTypes } from "./buttons.js";
+import DialogResult from "./dialogResult.js";
 export default class WindowBase {
     constructor(val1, val2, val3, val4) {
         this._position = new Point(20 * WindowBase.WindowCount % 300, 20 * WindowBase.WindowCount % 300);
@@ -104,6 +114,17 @@ export default class WindowBase {
             WindowBase.SetActive(this);
         }
     }
+    asyncShow() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.show();
+            const promise = new Promise((resolve, reject) => {
+                this.closing = () => {
+                    resolve(this.result);
+                };
+            });
+            return promise;
+        });
+    }
     elemMove(e) {
         if (this._isMouseDown) {
             const clientPos = new Point(e.clientX, e.clientY);
@@ -189,7 +210,7 @@ export default class WindowBase {
         c_area.style.cssText = `
             padding: 1rem 2rem;
         `;
-        // button
+        // button area
         const b = document.createElement("div");
         b.classList.add("dialog-button");
         b.style.cssText = `
@@ -200,7 +221,7 @@ export default class WindowBase {
         `;
         t_str.textContent = this.getTitle();
         c_area.appendChild(this.makeContentElem());
-        b.appendChild(this.makeButtonElem());
+        b.appendChild(this.makeButtonsElem());
         t.appendChild(t_str);
         c.appendChild(c_area);
         dw.appendChild(t);
@@ -213,18 +234,18 @@ export default class WindowBase {
     getTitle() {
         return this._title;
     }
-    makeButtonElem() {
+    makeButtonsElem() {
         const btns = document.createDocumentFragment();
-        const labels = getLabelFromButtonTypes(this._buttons);
-        for (const label of labels) {
-            if (label.trim().length == 0) {
+        const btnDatas = getBtnDataFromButtonTypes(this._buttons);
+        for (const btn of btnDatas) {
+            if (btn.text.trim().length === 0) {
                 continue;
             }
-            btns.appendChild(this.makeButton(label.trim()));
+            btns.appendChild(this.makeButton(btn.text, btn.key));
         }
         return btns;
     }
-    makeButton(text) {
+    makeButton(text, type) {
         const btn = document.createElement("button");
         btn.style.cssText = `
             display: inline-block;
@@ -242,8 +263,16 @@ export default class WindowBase {
         btn.innerHTML = text || " - ";
         btn.addEventListener("click", e => {
             var _a;
+            if (!this.result) {
+                this.result = new DialogResult();
+            }
+            this.result.button = type;
+            this.result.data = this.getResult();
             (_a = this._element.parentElement) === null || _a === void 0 ? void 0 : _a.removeChild(this._element);
             this._element = undefined;
+            if (this.closing) {
+                this.closing();
+            }
         });
         return btn;
     }

@@ -1,5 +1,6 @@
 import WindowBase from "./window-base.js";
 export default class MessageBox extends WindowBase {
+    init() { }
     getResult() {
         return null;
     }

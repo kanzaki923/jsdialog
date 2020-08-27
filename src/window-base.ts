@@ -8,6 +8,9 @@ export default abstract class WindowBase<T>{
     ///////// static
     private static WindowCount = 0;
     private static ActiveInstance:WindowBase<unknown>;
+    private static MinWidth = 150;
+    private static MinHeight = 150;
+    private static IsStyleWrited = false;
     private static SetActive(dialog:WindowBase<unknown>){
         if (!WindowBase.ActiveInstance){
             WindowBase.ActiveInstance = dialog;
@@ -17,6 +20,25 @@ export default abstract class WindowBase<T>{
         WindowBase.ActiveInstance.topMost = false;
         WindowBase.ActiveInstance = dialog;
         dialog.topMost = true;
+    }
+    private static WriteStyle(){
+        const style = document.createElement("style");
+        style.innerHTML = `
+            .dialog-main{
+                animation: .2s cubic-bezier(.18,.89,.32,1.28) forwards fadein-1, .2s cubic-bezier(.18,.89,.32,1.28) forwards zoomin-1;
+                animation-iteration-count: 1;
+            }
+
+            @keyframes fadein-1{
+                0% { opacity: 0; }
+                100% { opacity: 1;}
+            }
+            @keyframes zoomin-1{
+                0% { transform: scale(.98); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.body.append(style);
     }
 
     //////// instance
@@ -35,16 +57,22 @@ export default abstract class WindowBase<T>{
     private _topMost:boolean;
 
     public get title():string { return this._title; }
+    public set title(val:string){ this._title = val; }
     public get content():T | undefined { return this._content; }
+    public set content(val:T | undefined) {this._content = val;}
     
     public get buttons():Types { return this.buttons; }
     public set buttons(types:Types ){ this._buttons = types; }
     
+    public get size():Size { return this._size; }
     public set size(size:Size){
         let width = size.width;
         let height = size.height;
         if (width > window.innerWidth) {width = window.innerWidth}
+        else if (width < WindowBase.MinWidth) {width = WindowBase.MinWidth} 
         if (height > window.innerHeight) {height = window.innerHeight}
+        else if(height < WindowBase.MinHeight) {height = WindowBase.MinHeight}
+        
         this._size = new Size(width, height);
         
         if(this._element){
@@ -53,6 +81,7 @@ export default abstract class WindowBase<T>{
         }
     }
     
+    public get position():Point { return this._position; }
     public set position(pos: Point){
         let top = pos.Y;
         let left = pos.X;
@@ -80,18 +109,25 @@ export default abstract class WindowBase<T>{
             }
         }
     }
-
-
+    
+    
     public result:DialogResult;
+    public tag:unknown;
     public closing:() => void;
     public startPosition: DialogStartPosition;
-
+    
     constructor();
     constructor(title:string, content:T);
     constructor(title:string, content:T, startPos:DialogStartPosition);
     constructor(title:string, contnet:T, pos:Point, size:Size);
     constructor(pos:Point, size:Size);
     constructor(val1?:string | Point,    val2?:T | Size,    val3?:Point | DialogStartPosition,    val4?:Size){
+        // スタイルシートを書き出す(一度のみ)
+        if (!WindowBase.IsStyleWrited){
+            WindowBase.WriteStyle();
+        }
+
+        // 初期化
         this._position = new Point(20 * WindowBase.WindowCount % 300, 20 * WindowBase.WindowCount % 300);
         this.size = new Size(300, 200);
         this._title = "ダイアログ";
@@ -135,8 +171,8 @@ export default abstract class WindowBase<T>{
         if (val4 instanceof Size){
             this.size = val4;
         }
-        console.log(this._position);
         WindowBase.WindowCount++;
+        this.init();
     }
 
     public show():void{
@@ -164,16 +200,18 @@ export default abstract class WindowBase<T>{
         return promise;
     }
 
-    private elemMove(e:MouseEvent){
+    private moveElem(e:MouseEvent){
         if (this._isMouseDown){
             const  clientPos = new Point(e.clientX, e.clientY);
             this.position = Point.sub(clientPos ,this._clickPoint);
+            console.log(clientPos);
         }
     }
 
     private makeElement():HTMLElement{
         // dialog
         const d = document.createElement("div");
+        d.classList.add("dialog-main")
         d.style.cssText = `
             z-index: 999;
             position: fixed;
@@ -204,12 +242,14 @@ export default abstract class WindowBase<T>{
         t.style.cssText = `
             display:block;
             width: 100%;
-            max-height:3rem;
+            min-height: 5px;
+            max-height: 3rem;
             background-color: #828495;
             color: #fff;
             font-weight: 700;
             padding: .2rem 1rem;
             box-sizing: border-box;
+            flex-shrink: 0;
         `;
 
 
@@ -220,8 +260,21 @@ export default abstract class WindowBase<T>{
         if (this._isMovable){
             t.addEventListener("mousedown", e => {
                 this._isMouseDown = true;
-                (<HTMLElement>e.srcElement).style.cursor = "move";
-                this._clickPoint = new Point(e.offsetX, e.offsetY);
+                
+                // ドラッグ開始要素
+                const src = (<HTMLElement>e.srcElement);
+                src.style.cursor = "move";
+                
+                // 縁ギリギリをクリックしてドラッグを開始するとドラッグが終了できない対策
+                let safeMargin = 3;
+                safeMargin = Math.min(safeMargin, src.clientHeight / 2 - 1, src.clientWidth / 2 - 1);
+                console.log("SafeMargin: " + safeMargin);
+                const x =   (e.offsetX < safeMargin) ? safeMargin : 
+                            (e.offsetX > src.clientWidth - safeMargin) ? src.clientWidth - safeMargin : e.offsetX;
+
+                const y =   (e.offsetY < safeMargin) ? safeMargin : 
+                            (e.offsetY > src.clientHeight - safeMargin) ? src.clientHeight - safeMargin : e.offsetY;
+                this._clickPoint = new Point(x, y);
             });
             
             t.addEventListener("mouseup", e => {
@@ -229,7 +282,7 @@ export default abstract class WindowBase<T>{
                 (<HTMLElement>e.srcElement).style.cursor = "";
             });
             
-            window.addEventListener("mousemove", e => this.elemMove(e));
+            window.addEventListener("mousemove", e => this.moveElem(e));
         }
 
         // title -> t_str
@@ -250,10 +303,11 @@ export default abstract class WindowBase<T>{
         c.style.cssText = `
             display:block;
             min-height:2rem;
-            max-height: 80vh;
+            max-height: 90vh;
             width:100%;
             overflow: auto;
             flex-grow: 10;
+            flex-shrink: 10;
         `;
 
         // content -> c_area
@@ -271,6 +325,8 @@ export default abstract class WindowBase<T>{
             display: flex;
             flex-wrap:nowrap;
             justify-content: center;
+            flex-shrink: 0;
+            overflow-y: auto;
         `;
 
 
@@ -292,7 +348,8 @@ export default abstract class WindowBase<T>{
         return d;
     }
 
-    abstract makeContentElem():HTMLElement;
+    abstract makeContentElem():HTMLElement | DocumentFragment;
+    abstract init():void;
     
     protected getTitle():string{
         return this._title;
@@ -326,6 +383,7 @@ export default abstract class WindowBase<T>{
             cursor: pointer;
             margin: .2rem;
             border-radius: 5px;
+            box-sizing: border-box;
         `;
         
         btn.style.flexBasis = "250px";

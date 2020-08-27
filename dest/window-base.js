@@ -35,17 +35,18 @@ export default class WindowBase {
         if (val1 instanceof Point) {
             this._position = val1;
         }
-        if (typeof val2 === "string") {
-            this._content = val2;
-        }
         if (val2 instanceof Size) {
             this.size = val2;
+        }
+        else {
+            this._content = val2;
         }
         if (val3 instanceof Point) {
             this._position = val3;
         }
         if (val3 instanceof DialogStartPosition) {
             this.startPosition = val3;
+            console.log("start_pos", val3);
             if (val3.value == "Default") {
                 //
             }

@@ -146,11 +146,10 @@ export default abstract class WindowBase<T>{
             this._position = val1;
         }
         
-        if (typeof val2 === "string"){
-            this._content = val2;
-        }
         if (val2 instanceof Size){
             this.size = val2;
+        }else{
+            this._content = val2;
         }
         
         if (val3 instanceof Point){
@@ -158,6 +157,7 @@ export default abstract class WindowBase<T>{
         }
         if (val3 instanceof DialogStartPosition){
             this.startPosition = val3;
+            console.log("start_pos", val3);
             if (val3.value == "Default"){
                 //
             }else if(val3.value == "Manual"){

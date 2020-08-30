@@ -28,6 +28,27 @@ export default abstract class WindowBase<T>{
                 animation: .2s cubic-bezier(.18,.89,.32,1.28) forwards fadein-1, .2s cubic-bezier(.18,.89,.32,1.28) forwards zoomin-1;
                 animation-iteration-count: 1;
             }
+            .dialog-table{
+                border: solid 1px #828495;
+                border-collapse: collapse;
+                width:100%;
+            }
+
+            .dialog-table td, .dialog-table th{
+                border: solid 1px #828495;
+                padding:.2rem 1rem;
+            }
+
+            .dialog-table th{
+                text-align: left;
+                background-color: #525465;
+                color: #fff;
+
+            }
+
+            .dialog-table td{
+                width:100%;
+            }
 
             @keyframes fadein-1{
                 0% { opacity: 0; }
@@ -115,12 +136,18 @@ export default abstract class WindowBase<T>{
     public tag:unknown;
     public closing:() => void;
     public startPosition: DialogStartPosition;
+
+
+    abstract init():void;
+    abstract makeContentElem():HTMLElement | DocumentFragment;
+    protected abstract getResult():unknown;
     
     constructor();
     constructor(title:string, content:T);
     constructor(title:string, content:T, startPos:DialogStartPosition);
     constructor(title:string, contnet:T, pos:Point, size:Size);
     constructor(pos:Point, size:Size);
+
     constructor(val1?:string | Point,    val2?:T | Size,    val3?:Point | DialogStartPosition,    val4?:Size){
         // スタイルシートを書き出す(一度のみ)
         if (!WindowBase.IsStyleWrited){
@@ -138,7 +165,7 @@ export default abstract class WindowBase<T>{
         this._clickPoint = new Point();
         this._topMost = false;
         this.startPosition = new DialogStartPosition("Default");
-        
+
         if (typeof val1 === "string"){
             this._title = val1;
         }
@@ -146,10 +173,10 @@ export default abstract class WindowBase<T>{
             this._position = val1;
         }
         
-        if (val2 instanceof Size){
+        if (val2 instanceof Size && val1 instanceof Point){
             this.size = val2;
         }else{
-            this._content = val2;
+            this._content = <T>val2;
         }
         
         if (val3 instanceof Point){
@@ -348,14 +375,11 @@ export default abstract class WindowBase<T>{
         return d;
     }
 
-    abstract makeContentElem():HTMLElement | DocumentFragment;
-    abstract init():void;
     
     protected getTitle():string{
         return this._title;
     }
 
-    protected abstract getResult():unknown;
 
     protected makeButtonsElem():DocumentFragment{
         const btns = document.createDocumentFragment();

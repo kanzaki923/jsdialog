@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import Point from "./point.js";
 import Size from "./size.js";
 import { ButtonTypes as Types, getBtnDataFromButtonTypes } from "./buttons.js";
@@ -35,7 +26,7 @@ export default class WindowBase {
         if (val1 instanceof Point) {
             this._position = val1;
         }
-        if (val2 instanceof Size) {
+        if (val2 instanceof Size && val1 instanceof Point) {
             this.size = val2;
         }
         else {
@@ -82,6 +73,27 @@ export default class WindowBase {
             .dialog-main{
                 animation: .2s cubic-bezier(.18,.89,.32,1.28) forwards fadein-1, .2s cubic-bezier(.18,.89,.32,1.28) forwards zoomin-1;
                 animation-iteration-count: 1;
+            }
+            .dialog-table{
+                border: solid 1px #828495;
+                border-collapse: collapse;
+                width:100%;
+            }
+
+            .dialog-table td, .dialog-table th{
+                border: solid 1px #828495;
+                padding:.2rem 1rem;
+            }
+
+            .dialog-table th{
+                text-align: left;
+                background-color: #525465;
+                color: #fff;
+
+            }
+
+            .dialog-table td{
+                width:100%;
             }
 
             @keyframes fadein-1{
@@ -170,16 +182,14 @@ export default class WindowBase {
             WindowBase.SetActive(this);
         }
     }
-    asyncShow() {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.show();
-            const promise = new Promise((resolve, reject) => {
-                this.closing = () => {
-                    resolve(this.result);
-                };
-            });
-            return promise;
+    async asyncShow() {
+        this.show();
+        const promise = new Promise((resolve, reject) => {
+            this.closing = () => {
+                resolve(this.result);
+            };
         });
+        return promise;
     }
     moveElem(e) {
         if (this._isMouseDown) {
